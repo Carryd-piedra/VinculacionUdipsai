@@ -1,8 +1,6 @@
 package vinculacion.SistemaCitasUdipsai.Usuarios.Services;
 
-import com.udipsai.ms_usuarios.exception.ResourceNotFoundException;
-import com.udipsai.ms_usuarios.persistence.entity.UsuarioEntity;
-import com.udipsai.ms_usuarios.persistence.repository.UsuarioRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +11,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.ResourceNotFoundException;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Repositorios.UsuarioRepository;
+import vinculacion.SistemaCitasUdipsai.Usuarios.entity.UsuarioEntity;
 
 import java.util.ArrayList;
 import java.util.List;

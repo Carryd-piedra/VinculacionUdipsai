@@ -6,14 +6,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-
 import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.DataConflictException;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.ResourceNotFoundException;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Repositorios.AreaRepository;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.AreaDTO;
 import vinculacion.SistemaCitasUdipsai.Usuarios.entity.AreaEntity;
+
+import java.util.List;
+
+
 
 /*
  * Servicio para las Areas.

@@ -15,7 +15,6 @@ import vinculacion.SistemaCitasUdipsai.Usuarios.entity.RolEntity;
 import java.util.List;
 
 
-
 /*
  * Servicio para los Roles.
 */

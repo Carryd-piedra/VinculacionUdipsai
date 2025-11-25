@@ -1,5 +1,6 @@
 package vinculacion.SistemaCitasUdipsai.Usuarios.Services;
 
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,15 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-
-import org.springframework.transaction.annotation.Transactional;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.DataConflictException;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.InvalidRequestBodyException;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.ResourceNotFoundException;
@@ -29,6 +21,14 @@ import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.CoordinadorDTO;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.RegistrarCoordinadorDTO;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.RolDTO;
 import vinculacion.SistemaCitasUdipsai.Usuarios.entity.*;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+
 
 /*
  * Servicio para los Coordinadores.
