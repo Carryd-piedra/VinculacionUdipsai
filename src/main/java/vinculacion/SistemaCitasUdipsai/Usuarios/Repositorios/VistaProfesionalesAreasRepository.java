@@ -1,9 +1,9 @@
 package vinculacion.SistemaCitasUdipsai.Usuarios.Repositorios;
 
-import Usuarios.views.VistaProfesionalesAreas;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import vinculacion.SistemaCitasUdipsai.Usuarios.views.VistaProfesionalesAreas;
 
 public interface VistaProfesionalesAreasRepository extends JpaRepository<VistaProfesionalesAreas, Long> {
 
