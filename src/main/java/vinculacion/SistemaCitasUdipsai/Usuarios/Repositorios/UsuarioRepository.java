@@ -20,6 +20,7 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
     Page<UsuarioEntity> findAllByEstado(String estado, Pageable pageable);
 
     boolean existsByEmail(String email);
+    void deleteByCedula(String cedula);
 
     boolean existsByCedula(String cedula);
 }
