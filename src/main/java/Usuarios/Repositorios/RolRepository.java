@@ -1,6 +1,7 @@
-package com.udipsai.ms_usuarios.persistence.repository;
+package Usuarios.Repositorios;
 
-import com.udipsai.ms_usuarios.persistence.entity.RolEntity;
+
+import Usuarios.entity.RolEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,7 +1,6 @@
-package com.udipsai.ms_usuarios.persistence.repository;
+package Usuarios.Repositorios;
 
-import com.udipsai.ms_usuarios.persistence.entity.ProfesionalEntity;
-
+import Usuarios.entity.ProfesionalEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
