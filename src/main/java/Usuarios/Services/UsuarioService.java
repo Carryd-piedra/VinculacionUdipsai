@@ -1,7 +1,7 @@
 package Usuarios.Services;
 
 import Usuarios.Repositorios.UsuarioRepository;
-import Usuarios.entity.Usuario;
+import Usuarios.entity.UsuarioEntity;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
@@ -14,19 +14,19 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
-    public Usuario guardar(Usuario usuario) {
-        return usuarioRepository.save(usuario);
+    public UsuarioEntity guardar(UsuarioEntity usuarioEntity) {
+        return usuarioRepository.save(usuarioEntity);
     }
 
-    public List<Usuario> listar() {
+    public List<UsuarioEntity> listar() {
         return usuarioRepository.findAll();
     }
 
-    public Optional<Usuario> buscarPorCorreo(String correo) {
+    public Optional<UsuarioEntity> buscarPorCorreo(String correo) {
         return usuarioRepository.findByCorreo(correo);
     }
 
-    public List<Usuario> listarPorTipo(String tipo) {
+    public List<UsuarioEntity> listarPorTipo(String tipo) {
         return usuarioRepository.findByTipoUsuarioNombre(tipo);
     }
 }
