@@ -1,7 +1,6 @@
 package vinculacion.SistemaCitasUdipsai.Usuarios.Services;
 
-import com.udipsai.ms_usuarios.persistence.repository.*;
-import com.udipsai.ms_usuarios.persistence.view.VistaProfesionalesAreas;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,20 +17,18 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.udipsai.ms_usuarios.persistence.entity.ProfesionalEntity;
-import com.udipsai.ms_usuarios.persistence.entity.RolEntity;
-import com.udipsai.ms_usuarios.persistence.entity.UsuarioAreaEntity;
-import com.udipsai.ms_usuarios.exception.DataConflictException;
-import com.udipsai.ms_usuarios.exception.InvalidRequestBodyException;
-import com.udipsai.ms_usuarios.exception.ResourceNotFoundException;
-import com.udipsai.ms_usuarios.persistence.entity.AreaEntity;
-import com.udipsai.ms_usuarios.persistence.entity.UsuarioEntity;
-import com.udipsai.ms_usuarios.persistence.entity.UsuarioRolEntity;
-import com.udipsai.ms_usuarios.service.dto.ProfesionalDTO;
-import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.RegistrarProfesionalDTO;
-import com.udipsai.ms_usuarios.service.dto.RolDTO;
-import com.udipsai.ms_usuarios.service.dto.AreaDTO;
+
 import org.springframework.transaction.annotation.Transactional;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.DataConflictException;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.InvalidRequestBodyException;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.ResourceNotFoundException;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Repositorios.*;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.AreaDTO;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.ProfesionalDTO;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.RegistrarProfesionalDTO;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.RolDTO;
+import vinculacion.SistemaCitasUdipsai.Usuarios.entity.*;
+import vinculacion.SistemaCitasUdipsai.Usuarios.views.VistaProfesionalesAreas;
 
 /*
  * Servicio para los Profesionales.
