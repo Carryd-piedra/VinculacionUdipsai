@@ -1,5 +1,6 @@
 package vinculacion.SistemaCitasUdipsai.Usuarios.Services;
 
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.DataConflictException;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.InvalidRequestBodyException;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Exceptions.ResourceNotFoundException;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Repositorios.AreaRepository;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Repositorios.CoordinadorRepository;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Repositorios.RolRepository;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Repositorios.UsuarioRepository;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.AreaDTO;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.CoordinadorDTO;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.RegistrarCoordinadorDTO;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.RolDTO;
+import vinculacion.SistemaCitasUdipsai.Usuarios.entity.*;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -15,24 +28,7 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.udipsai.ms_usuarios.persistence.entity.CoordinadorEntity;
-import com.udipsai.ms_usuarios.persistence.entity.RolEntity;
-import com.udipsai.ms_usuarios.persistence.entity.UsuarioAreaEntity;
-import com.udipsai.ms_usuarios.exception.DataConflictException;
-import com.udipsai.ms_usuarios.exception.InvalidRequestBodyException;
-import com.udipsai.ms_usuarios.exception.ResourceNotFoundException;
-import com.udipsai.ms_usuarios.persistence.entity.AreaEntity;
-import com.udipsai.ms_usuarios.persistence.entity.UsuarioEntity;
-import com.udipsai.ms_usuarios.persistence.entity.UsuarioRolEntity;
-import com.udipsai.ms_usuarios.persistence.repository.AreaRepository;
-import com.udipsai.ms_usuarios.persistence.repository.CoordinadorRepository;
-import com.udipsai.ms_usuarios.persistence.repository.RolRepository;
-import com.udipsai.ms_usuarios.persistence.repository.UsuarioRepository;
-import com.udipsai.ms_usuarios.service.dto.CoordinadorDTO;
-import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.RegistrarCoordinadorDTO;
-import com.udipsai.ms_usuarios.service.dto.RolDTO;
-import com.udipsai.ms_usuarios.service.dto.AreaDTO;
-import org.springframework.transaction.annotation.Transactional;
+
 
 /*
  * Servicio para los Coordinadores.
