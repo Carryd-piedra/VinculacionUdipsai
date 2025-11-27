@@ -22,6 +22,10 @@ public class UsuarioRolEntity {
     private UsuarioEntity usuario;
 
     @Id
+    @Column(name = "id_usuario", nullable = false, length = 12)
+    private Long idUsuario;
+
+    @Id
     @ManyToOne
     @JoinColumn(name = "id_rol", nullable = false)
     private RolEntity rol;
