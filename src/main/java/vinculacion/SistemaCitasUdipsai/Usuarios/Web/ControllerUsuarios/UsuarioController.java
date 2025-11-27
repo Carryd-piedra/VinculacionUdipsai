@@ -100,4 +100,7 @@ public class UsuarioController {
     public ResponseEntity<String> bloquearUsuario(@PathVariable String cedula) {
         return usuarioServ.bloquearUsuario(cedula);
     }
+
+
 }
+

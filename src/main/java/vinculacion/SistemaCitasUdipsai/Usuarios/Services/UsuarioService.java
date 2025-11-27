@@ -242,6 +242,10 @@ public class UsuarioService {
         return ResponseEntity.ok(response);
     }
 
+    public Optional<UsuarioEntity> findByCedula(String cedula) {
+        return usuarioRepo.findByCedula(cedula);
+}
+
     // Eliminar un Usuario.
     public ResponseEntity<String> eliminarUsuario(String cedula) {
         logger.info("eliminarUsuario()");
