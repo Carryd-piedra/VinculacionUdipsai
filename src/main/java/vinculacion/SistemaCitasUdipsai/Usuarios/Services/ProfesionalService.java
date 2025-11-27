@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -499,5 +501,39 @@ public class ProfesionalService {
         Page<ProfesionalDTO> profesionalesDTOs = profesionalesF.map(profesional -> mapearDTO(profesional));
         logger.info("200 OK: Profesionales por filtro obtenidos correctamente");
         return new ResponseEntity<>(profesionalesDTOs, HttpStatus.OK);
+    }
+
+    @Service
+    public static class UsuarioRolService {
+
+        @Autowired
+        private UsuarioRolRepository usuarioRolRepository;
+
+        public List<UsuarioRolEntity> getAllUsuarioRoles() {
+            return usuarioRolRepository.findAll();
+        }
+
+        public Optional<UsuarioRolEntity> getUsuarioRolById(Long idUsuario, Long rol) {
+            return usuarioRolRepository.findById(new UsuarioRolId(idUsuario, rol));
+        }
+
+        public UsuarioRolEntity createUsuarioRol(UsuarioRolEntity usuarioRol) {
+            return usuarioRolRepository.save(usuarioRol);
+        }
+
+        public UsuarioRolEntity updateUsuarioRol(Long idUsuario, Long rol, UsuarioRolEntity updatedUsuarioRol) {
+            Optional<UsuarioRolEntity> existingUsuarioRol = usuarioRolRepository.findById(new UsuarioRolId(idUsuario, rol));
+            if (existingUsuarioRol.isPresent()) {
+                UsuarioRolEntity usuarioRolEntity = existingUsuarioRol.get();
+                usuarioRolEntity.setFechaAsignacion(updatedUsuarioRol.getFechaAsignacion());
+                return usuarioRolRepository.save(usuarioRolEntity);
+            } else {
+                throw new RuntimeException("UsuarioRol not found");
+            }
+        }
+
+        public void deleteUsuarioRol(Long idUsuario, Long rol) {
+            usuarioRolRepository.deleteById(new UsuarioRolId(idUsuario, rol));
+        }
     }
 }

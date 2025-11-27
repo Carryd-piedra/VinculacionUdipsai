@@ -11,10 +11,8 @@ import vinculacion.SistemaCitasUdipsai.Usuarios.entity.*;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,27 +25,23 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor // Inyección de dependencias segura (Mejor práctica que @Autowired)
 public class UsuarioService {
-    @Autowired
-    private UsuarioRepository usuarioRepo;
 
-    @Autowired
-    private RolRepository rolRepo;
-
-    @Autowired
-    private AreaRepository areaRepo;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UsuarioRepository usuarioRepo;
+    private final RolRepository rolRepo;
+    private final AreaRepository areaRepo;
+    private final PasswordEncoder passwordEncoder;
 
     private static final Logger logger = LoggerFactory.getLogger(UsuarioService.class);
 
-    // Mapear de un Usuario a DTO.
+    // ==========================================
+    // MAPPERS (Conversión Entidad <-> DTO)
+    // ==========================================
+
     public UsuarioDTO mapearDTO(UsuarioEntity usr) {
-        UsuarioDTO dto = new UsuarioDTO(
+        return new UsuarioDTO(
                 usr.getIdUsuario(),
                 usr.getCedula(),
                 usr.getEstado(),
@@ -56,318 +50,219 @@ public class UsuarioService {
                 usr.getEmail(),
                 usr.getCelular(),
                 usr.getUsuarioRoles().stream()
-                        .filter(usuarioRol -> usuarioRol.getEstado().equals("A"))
-                        .map(usuarioRol -> {
-                            RolEntity rol = usuarioRol.getRol();
-                            RolDTO rolDTO = new RolDTO(
-                                    rol.getIdRol(),
-                                    rol.getNombre(),
-                                    rol.getEstado());
-                            return rolDTO;
-                        }).collect(Collectors.toSet()),
+                        .filter(ur -> "A".equals(ur.getEstado()))
+                        .map(ur -> new RolDTO(ur.getRol().getIdRol(), ur.getRol().getNombre(), ur.getRol().getEstado()))
+                        .collect(Collectors.toSet()),
                 usr.getUsuarioAreas().stream()
-                        .filter(usuarioArea -> usuarioArea.getEstado().equals("A"))
-                        .map(usuarioArea -> {
-                            AreaEntity area = usuarioArea.getArea();
-                            AreaDTO areaDTO = new AreaDTO(
-                                    area.getIdArea(),
-                                    area.getNombre(),
-                                    area.getEstado());
-                            return areaDTO;
-                        }).collect(Collectors.toSet()));
-        return dto;
+                        .filter(ua -> "A".equals(ua.getEstado()))
+                        .map(ua -> new AreaDTO(ua.getArea().getIdArea(), ua.getArea().getNombre(), ua.getArea().getEstado()))
+                        .collect(Collectors.toSet())
+        );
     }
 
-    // Mapear de una lista de Usuarios a una lista de DTOs.
     public List<UsuarioDTO> mapearDTOs(List<UsuarioEntity> usuarios) {
-        List<UsuarioDTO> dtos = usuarios
-                .stream()
-                .map(usr -> mapearDTO(usr))
-                .toList();
-        return dtos;
+        return usuarios.stream().map(this::mapearDTO).toList();
     }
 
-    // Obtener todos los Usuarios activos.
+    // ==========================================
+    // MÉTODOS DE CONSULTA (GET)
+    // ==========================================
+
     public ResponseEntity<Page<UsuarioDTO>> obtenerUsuarios(Pageable pageable) {
-        logger.info("obtenerUsuariosActivos()");
-        logger.info("Obteniendo todos los usuarios activos");
-        Page<UsuarioEntity> usuariosActivosPage = usuarioRepo.findAllByEstado("A", pageable);
-        Page<UsuarioDTO> usuariosDTOs = usuariosActivosPage.map(usr -> mapearDTO(usr));
-        logger.info("200 OK: Usuarios activos obtenidos correctamente");
-        return new ResponseEntity<>(usuariosDTOs, HttpStatus.OK);
+        logger.info("Obteniendo usuarios activos");
+        return ResponseEntity.ok(usuarioRepo.findAllByEstado("A", pageable).map(this::mapearDTO));
     }
 
-    // Obtener un Usuario especifico.
     public ResponseEntity<UsuarioDTO> obtenerUsuario(String cedula) {
-        logger.info("obtenerUsuario()");
-        logger.info("Obteniendo usuario con cedula: " + cedula);
-        UsuarioEntity usuario = usuarioRepo.findByCedula(cedula).orElseThrow(
-                () -> new ResourceNotFoundException("Usuario con cedula " + cedula + " no encontrado"));
-        UsuarioDTO usuarioDTO = mapearDTO(usuario);
-        logger.info("200 OK: Usuario obtenido correctamente");
-        return new ResponseEntity<>(usuarioDTO, HttpStatus.OK);
+        logger.info("Obteniendo usuario: {}", cedula);
+        UsuarioEntity usuario = usuarioRepo.findByCedula(cedula)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario con cédula " + cedula + " no encontrado"));
+        return ResponseEntity.ok(mapearDTO(usuario));
     }
 
-    // Obtener todos los Usuarios (A, I, B, N).
     public ResponseEntity<Page<UsuarioDTO>> obtenerUsuariosTodos(Pageable pageable) {
-        logger.info("obtenerUsuarios()");
-        logger.info("Obteniendo todos los usuarios");
-        Page<UsuarioEntity> usuariosPage = usuarioRepo.findAll(pageable);
-        Page<UsuarioDTO> usuariosDTOs = usuariosPage.map(usr -> mapearDTO(usr));
-        logger.info("200 OK: Usuarios obtenidos correctamente");
-        return new ResponseEntity<>(usuariosDTOs, HttpStatus.OK);
+        return ResponseEntity.ok(usuarioRepo.findAll(pageable).map(this::mapearDTO));
     }
 
-    // Obtener todos los Usuarios inactivos.
     public ResponseEntity<Page<UsuarioDTO>> obtenerUsuariosInactivos(Pageable pageable) {
-        logger.info("obtenerUsuariosInactivos()");
-        logger.info("Obteniendo todos los usuarios inactivos");
-        Page<UsuarioEntity> usuariosInactivosPage = usuarioRepo.findAllByEstado("I", pageable);
-        Page<UsuarioDTO> usuariosDTOs = usuariosInactivosPage.map(usr -> mapearDTO(usr));
-        logger.info("200 OK: Usuarios inactivos obtenidos correctamente");
-        return new ResponseEntity<>(usuariosDTOs, HttpStatus.OK);
+        return ResponseEntity.ok(usuarioRepo.findAllByEstado("I", pageable).map(this::mapearDTO));
     }
 
-    // Obtener todos los Usuarios bloqueados.
     public ResponseEntity<Page<UsuarioDTO>> obtenerUsuariosBloqueados(Pageable pageable) {
-        logger.info("obtenerUsuariosBloqueados()");
-        logger.info("Obteniendo todos los usuarios bloqueados");
-        Page<UsuarioEntity> usuariosBloqueadosPage = usuarioRepo.findAllByEstado("B", pageable);
-        Page<UsuarioDTO> usuariosDTOs = usuariosBloqueadosPage.map(usr -> mapearDTO(usr));
-        logger.info("200 OK: Usuarios bloqueados obtenidos correctamente");
-        return new ResponseEntity<>(usuariosDTOs, HttpStatus.OK);
+        return ResponseEntity.ok(usuarioRepo.findAllByEstado("B", pageable).map(this::mapearDTO));
     }
 
-    // Obtener todos los Usuarios eliminados.
     public ResponseEntity<Page<UsuarioDTO>> obtenerUsuariosEliminados(Pageable pageable) {
-        logger.info("obtenerUsuariosEliminados()");
-        logger.info("Obteniendo todos los usuarios eliminados");
-        Page<UsuarioEntity> usuariosEliminadosPage = usuarioRepo.findAllByEstado("N", pageable);
-        Page<UsuarioDTO> usuariosDTOs = usuariosEliminadosPage.map(usr -> mapearDTO(usr));
-        logger.info("200 OK: Usuarios eliminados obtenidos correctamente");
-        return new ResponseEntity<>(usuariosDTOs, HttpStatus.OK);
+        return ResponseEntity.ok(usuarioRepo.findAllByEstado("N", pageable).map(this::mapearDTO));
     }
 
-    // Registrar un Usuario nuevo.
+    // ==========================================
+    // MÉTODOS TRANSACCIONALES (POST, PUT, DELETE)
+    // ==========================================
+
+    @Transactional
     public UsuarioEntity registrarUsuario(RegistrarUsuarioDTO usuario) {
-        logger.info("registrarUsuario()");
-        logger.info("Registrando usuario con cedula {}", usuario.getCedula());
+        logger.info("Registrando usuario: {}", usuario.getCedula());
 
-        if (usuario.getCedula() == null || usuario.getContrasenia() == null || usuario.getNombres() == null
-                || usuario.getApellidos() == null || usuario.getEmail() == null || usuario.getCelular() == null) {
-            throw new InvalidRequestBodyException("Faltan campos obligatorios para registrar el usuario");
+        if (usuario.getCedula() == null || usuario.getContrasenia() == null || usuario.getNombres() == null) {
+            throw new InvalidRequestBodyException("Faltan campos obligatorios");
         }
 
-        UsuarioEntity usuarioNuevo = new UsuarioEntity();
-        usuarioNuevo.setCedula(usuario.getCedula());
-        usuarioNuevo.setContrasenia(passwordEncoder.encode(usuario.getContrasenia()));
-        usuarioNuevo.setNombres(usuario.getNombres());
-        usuarioNuevo.setApellidos(usuario.getApellidos());
-        usuarioNuevo.setEmail(usuario.getEmail());
-        usuarioNuevo.setCelular(usuario.getCelular());
-        usuarioNuevo.setEstado("A");
-
-        ZonedDateTime utc5 = ZonedDateTime.now(ZoneId.of("America/Bogota"));
-        LocalDateTime localDateTimeUTC5 = utc5.toLocalDateTime();
-        usuarioNuevo.setFechaCreacion(localDateTimeUTC5);
-        usuarioNuevo.setFechaModificacion(localDateTimeUTC5);
-
-        Set<UsuarioRolEntity> usuarioRoles = usuario.getRoles().stream().map(rol -> {
-            RolEntity rolEncontrado = rolRepo.findByNombre(rol.getNombre()).get();
-
-            if (rolEncontrado != null && rolEncontrado.getEstado().equals("A")) {
-                UsuarioRolEntity usuarioRol = new UsuarioRolEntity();
-                usuarioRol.setUsuario(usuarioNuevo);
-                usuarioRol.setRol(rolEncontrado);
-                usuarioRol.setFechaAsignacion(localDateTimeUTC5);
-                usuarioRol.setEstado("A");
-                return usuarioRol;
-            } else {
-                return null;
-            }
-
-        }).collect(Collectors.toSet());
-
-        Set<UsuarioAreaEntity> usuarioAreas = usuario.getAreas().stream().map(area -> {
-            AreaEntity areaEncontrada = areaRepo.findById(area.getIdArea()).get();
-
-            if (areaEncontrada != null && areaEncontrada.getEstado().equals("A")) {
-                UsuarioAreaEntity usuarioArea = new UsuarioAreaEntity();
-                usuarioArea.setUsuario(usuarioNuevo);
-                usuarioArea.setArea(areaEncontrada);
-                usuarioArea.setFechaAsignacion(localDateTimeUTC5);
-                usuarioArea.setEstado("A");
-                return usuarioArea;
-            } else {
-                return null;
-            }
-
-        }).collect(Collectors.toSet());
-
-        usuarioNuevo.setUsuarioRoles(usuarioRoles);
-        usuarioNuevo.setUsuarioAreas(usuarioAreas);
-
-        UsuarioEntity usuarioGuardado = usuarioRepo.save(usuarioNuevo);
-        logger.info("Usuario registrado correctamente");
-        return usuarioGuardado;
-    }
-
-    // Cambiar contraseña de un Usuario.
-    public ResponseEntity<?> cambiarContrasenia(String cedula, CambiarContraseniaDTO peticion) {
-        logger.info("cambiarContrasenia()");
-        logger.info("Cambiando contraseña de usuario con cedula: " + cedula);
-        UsuarioEntity usuarioEncontrado = usuarioRepo.findByCedula(cedula).orElseThrow(
-                () -> new ResourceNotFoundException("Usuario con cedula " + cedula + " no encontrado"));
-
-        String antigua = peticion.getContrasenia();
-        String nueva = peticion.getNuevaContrasenia();
-
-        if (!passwordEncoder.matches(antigua, usuarioEncontrado.getContrasenia())) {
-            throw new UnauthorizedAccessException("Contraseña antigua es incorrecta");
+        // Verificar si ya existe
+        if(usuarioRepo.findByCedula(usuario.getCedula()).isPresent()){
+            throw new InvalidRequestBodyException("El usuario con esa cédula ya existe");
         }
 
-        usuarioEncontrado.setContrasenia(passwordEncoder.encode(nueva));
+        UsuarioEntity nuevo = new UsuarioEntity();
+        nuevo.setCedula(usuario.getCedula());
+        nuevo.setContrasenia(passwordEncoder.encode(usuario.getContrasenia()));
+        nuevo.setNombres(usuario.getNombres());
+        nuevo.setApellidos(usuario.getApellidos());
+        nuevo.setEmail(usuario.getEmail());
+        nuevo.setCelular(usuario.getCelular());
+        nuevo.setEstado("A");
 
-        ZonedDateTime utc5 = ZonedDateTime.now(ZoneId.of("America/Bogota"));
-        LocalDateTime localDateTimeUTC5 = utc5.toLocalDateTime();
-        usuarioEncontrado.setFechaModificacion(localDateTimeUTC5);
+        LocalDateTime ahora = ZonedDateTime.now(ZoneId.of("America/Bogota")).toLocalDateTime();
+        nuevo.setFechaCreacion(ahora);
+        nuevo.setFechaModificacion(ahora);
 
-        usuarioRepo.save(usuarioEncontrado);
-        logger.info("200 OK: Contraseña actualizada correctamente");
-        logger.info("Fecha de modificacion: " + usuarioEncontrado.getFechaModificacion().toString());
+        // Asignación segura de Roles
+        Set<UsuarioRolEntity> roles = usuario.getRoles().stream()
+                .map(rolDto -> rolRepo.findByNombre(rolDto.getNombre())
+                        .orElseThrow(() -> new ResourceNotFoundException("Rol no encontrado: " + rolDto.getNombre())))
+                .filter(rol -> "A".equals(rol.getEstado()))
+                .map(rol -> {
+                    UsuarioRolEntity ur = new UsuarioRolEntity();
+                    ur.setUsuario(nuevo);
+                    ur.setRol(rol);
+                    ur.setFechaAsignacion(ahora);
+                    ur.setEstado("A");
+                    return ur;
+                }).collect(Collectors.toSet());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Contraseña actualizada correctamente");
-        response.put("fechaModificacion", usuarioEncontrado.getFechaModificacion().toString());
-        return ResponseEntity.ok(response);
-    }
+        // Asignación segura de Áreas
+        Set<UsuarioAreaEntity> areas = usuario.getAreas().stream()
+                .map(areaDto -> areaRepo.findById(areaDto.getIdArea())
+                        .orElseThrow(() -> new ResourceNotFoundException("Área no encontrada ID: " + areaDto.getIdArea())))
+                .filter(area -> "A".equals(area.getEstado()))
+                .map(area -> {
+                    UsuarioAreaEntity ua = new UsuarioAreaEntity();
+                    ua.setUsuario(nuevo);
+                    ua.setArea(area);
+                    ua.setFechaAsignacion(ahora);
+                    ua.setEstado("A");
+                    return ua;
+                }).collect(Collectors.toSet());
 
-    // Eliminar un Usuario.
-    public ResponseEntity<String> eliminarUsuario(String cedula) {
-        logger.info("eliminarUsuario()");
-        logger.info("Eliminando usuario con cedula: " + cedula);
-        UsuarioEntity usuarioEncontrado = usuarioRepo.findByCedula(cedula).orElseThrow(
-                () -> new ResourceNotFoundException("Usuario con cedula " + cedula + " no encontrado"));
-        usuarioEncontrado.setEstado("N");
+        nuevo.setUsuarioRoles(roles);
+        nuevo.setUsuarioAreas(areas);
 
-        Set<UsuarioRolEntity> usuarioRoles = usuarioEncontrado.getUsuarioRoles();
-        for (UsuarioRolEntity usuarioRol : usuarioRoles) {
-            usuarioRol.setEstado("N");
-        }
-
-        Set<UsuarioAreaEntity> usuarioAreas = usuarioEncontrado.getUsuarioAreas();
-        for (UsuarioAreaEntity usuarioArea : usuarioAreas) {
-            usuarioArea.setEstado("N");
-        }
-
-        usuarioRepo.save(usuarioEncontrado);
-        logger.info("200 OK: Usuario eliminado correctamente");
-        return new ResponseEntity<>("Usuario eliminado correctamente", HttpStatus.OK);
-    }
-
-    // Habilitar un Usuario.
-    public ResponseEntity<String> habilitarUsuario(String cedula) {
-        logger.info("habilitarUsuario()");
-        logger.info("Habilitando usuario con cedula: " + cedula);
-        UsuarioEntity usuarioEncontrado = usuarioRepo.findByCedula(cedula).orElseThrow(
-                () -> new ResourceNotFoundException("Usuario con cedula " + cedula + " no encontrado"));
-        usuarioEncontrado.setEstado("A");
-        usuarioRepo.save(usuarioEncontrado);
-        logger.info("200 OK: Usuario habilitado correctamente");
-        return new ResponseEntity<>("Usuario activado correctamente", HttpStatus.OK);
-    }
-
-    // Deshabilitar un Usuario.
-    public ResponseEntity<String> deshabilitarUsuario(String cedula) {
-        logger.info("deshabilitarUsuario()");
-        logger.info("Deshabilitando usuario con cedula: " + cedula);
-        UsuarioEntity usuarioEncontrado = usuarioRepo.findByCedula(cedula).orElseThrow(
-                () -> new ResourceNotFoundException("Usuario con cedula " + cedula + " no encontrado"));
-        usuarioEncontrado.setEstado("I");
-        usuarioRepo.save(usuarioEncontrado);
-        logger.info("200 OK: Usuario deshabilitado correctamente");
-        return new ResponseEntity<>("Usuario desactivado correctamente", HttpStatus.OK);
-    }
-
-    // Bloquear un Usuario.
-    public ResponseEntity<String> bloquearUsuario(String cedula) {
-        logger.info("bloquearUsuario()");
-        logger.info("Bloqueando usuario con cedula: " + cedula);
-        UsuarioEntity usuarioEncontrado = usuarioRepo.findByCedula(cedula)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario con cedula " + cedula + " no encontrado"));
-        usuarioEncontrado.setEstado("B");
-        usuarioRepo.save(usuarioEncontrado);
-        logger.info("200 OK: Usuario bloqueado correctamente");
-        return new ResponseEntity<>("Usuario bloqueado correctamente", HttpStatus.OK);
+        return usuarioRepo.save(nuevo);
     }
 
     @Transactional
-    public ResponseEntity<UsuarioEntity> actualizarUsuario(Long id, UsuarioEntity usuario) {
-        logger.info("actualizarUsuario()");
-        logger.info("Actualizando usuario con cedula: " + id);
+    public ResponseEntity<UsuarioEntity> actualizarUsuario(Long id, UsuarioEntity usuarioDto) {
+        logger.info("Actualizando usuario ID: {}", id);
 
-        UsuarioEntity usuarioEncontrado = usuarioRepo.findById(id)
+        UsuarioEntity existente = usuarioRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado"));
 
-        usuarioEncontrado.setNombres(usuario.getNombres());
-        usuarioEncontrado.setApellidos(usuario.getApellidos());
-        usuarioEncontrado.setEmail(usuario.getEmail());
-        usuarioEncontrado.setCelular(usuario.getCelular());
+        existente.setNombres(usuarioDto.getNombres());
+        existente.setApellidos(usuarioDto.getApellidos());
+        existente.setEmail(usuarioDto.getEmail());
+        existente.setCelular(usuarioDto.getCelular());
 
-        if (usuarioEncontrado.getUsuarioRoles() != null) {
-            usuarioEncontrado.getUsuarioRoles().forEach(usuarioRol -> usuarioRol.setEstado("N"));
-        }
-        if (usuarioEncontrado.getUsuarioAreas() != null) {
-            usuarioEncontrado.getUsuarioAreas().forEach(usuarioArea -> usuarioArea.setEstado("N"));
-        }
+        LocalDateTime ahora = ZonedDateTime.now(ZoneId.of("America/Bogota")).toLocalDateTime();
+        existente.setFechaModificacion(ahora);
 
-        ZonedDateTime utc5 = ZonedDateTime.now(ZoneId.of("America/Bogota"));
-        LocalDateTime localDateTimeUTC5 = utc5.toLocalDateTime();
-        usuarioEncontrado.setFechaModificacion(localDateTimeUTC5);
+        // Desactivar relaciones anteriores
+        if (existente.getUsuarioRoles() != null) existente.getUsuarioRoles().forEach(ur -> ur.setEstado("N"));
+        if (existente.getUsuarioAreas() != null) existente.getUsuarioAreas().forEach(ua -> ua.setEstado("N"));
 
-        Set<UsuarioRolEntity> usuarioRolesNuevos = usuario.getUsuarioRoles().stream()
-                .map(rol -> rolRepo.findByNombre(rol.getRol().getNombre()).orElse(null))
-                .filter(Objects::nonNull)
-                .filter(rol -> "A".equals(rol.getEstado()))
-                .map(rol -> {
-                    UsuarioRolEntity usuarioRol = new UsuarioRolEntity();
-                    usuarioRol.setUsuario(usuarioEncontrado);
-                    usuarioRol.setRol(rol);
-                    usuarioRol.setFechaAsignacion(localDateTimeUTC5);
-                    usuarioRol.setEstado("A");
-                    return usuarioRol;
-                })
-                .collect(Collectors.toSet());
-
-        Set<UsuarioAreaEntity> usuarioAreasNuevos = usuario.getUsuarioAreas().stream()
-                .map(area -> areaRepo.findById(area.getArea().getIdArea()).orElse(null))
-                .filter(Objects::nonNull)
-                .filter(area -> "A".equals(area.getEstado()))
-                .map(area -> {
-                    UsuarioAreaEntity usuarioArea = new UsuarioAreaEntity();
-                    usuarioArea.setUsuario(usuarioEncontrado);
-                    usuarioArea.setArea(area);
-                    usuarioArea.setFechaAsignacion(localDateTimeUTC5);
-                    usuarioArea.setEstado("A");
-                    return usuarioArea;
-                })
-                .collect(Collectors.toSet());
-
-        if (!usuarioRolesNuevos.isEmpty()) {
-            usuarioEncontrado.setUsuarioRoles(usuarioRolesNuevos);
-        } else {
-            logger.error("Se registró el usuario sin ningún rol");
+        // Crear nuevas relaciones
+        // Nota: Asumimos que usuarioDto trae la estructura compleja de roles/areas.
+        // Si no, deberías usar un DTO específico para update.
+        if (usuarioDto.getUsuarioRoles() != null) {
+            Set<UsuarioRolEntity> nuevosRoles = usuarioDto.getUsuarioRoles().stream()
+                    .map(ur -> rolRepo.findByNombre(ur.getRol().getNombre()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .map(rol -> {
+                        UsuarioRolEntity ur = new UsuarioRolEntity();
+                        ur.setUsuario(existente);
+                        ur.setRol(rol);
+                        ur.setFechaAsignacion(ahora);
+                        ur.setEstado("A");
+                        return ur;
+                    }).collect(Collectors.toSet());
+            existente.setUsuarioRoles(nuevosRoles);
         }
 
-        if (!usuarioAreasNuevos.isEmpty()) {
-            usuarioEncontrado.setUsuarioAreas(usuarioAreasNuevos);
-        } else {
-            logger.error("Se registró el usuario sin ninguna área asignada");
+        if (usuarioDto.getUsuarioAreas() != null) {
+            Set<UsuarioAreaEntity> nuevasAreas = usuarioDto.getUsuarioAreas().stream()
+                    .map(ua -> areaRepo.findById(ua.getArea().getIdArea()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .map(area -> {
+                        UsuarioAreaEntity ua = new UsuarioAreaEntity();
+                        ua.setUsuario(existente);
+                        ua.setArea(area);
+                        ua.setFechaAsignacion(ahora);
+                        ua.setEstado("A");
+                        return ua;
+                    }).collect(Collectors.toSet());
+            existente.setUsuarioAreas(nuevasAreas);
         }
 
-        UsuarioEntity usuarioGuardado = usuarioRepo.save(usuarioEncontrado);
-        logger.info("Usuario actualizado correctamente");
-        return new ResponseEntity<>(usuarioGuardado, HttpStatus.OK);
+        return ResponseEntity.ok(usuarioRepo.save(existente));
+    }
+
+    public ResponseEntity<?> cambiarContrasenia(String cedula, CambiarContraseniaDTO peticion) {
+        UsuarioEntity usuario = usuarioRepo.findByCedula(cedula)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+        if (!passwordEncoder.matches(peticion.getContrasenia(), usuario.getContrasenia())) {
+            throw new UnauthorizedAccessException("Contraseña antigua incorrecta");
+        }
+
+        usuario.setContrasenia(passwordEncoder.encode(peticion.getNuevaContrasenia()));
+        usuario.setFechaModificacion(ZonedDateTime.now(ZoneId.of("America/Bogota")).toLocalDateTime());
+        usuarioRepo.save(usuario);
+
+        return ResponseEntity.ok(Map.of("message", "Contraseña actualizada"));
+    }
+
+    // ==========================================
+    // MÉTODOS DE ESTADO (Enable/Disable/Block)
+    // ==========================================
+
+    private ResponseEntity<String> cambiarEstadoUsuario(String cedula, String nuevoEstado, String mensajeExito) {
+        UsuarioEntity usuario = usuarioRepo.findByCedula(cedula)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+
+        usuario.setEstado(nuevoEstado);
+
+        // Si se elimina (N), eliminamos lógicamente sus relaciones también
+        if("N".equals(nuevoEstado)){
+            if(usuario.getUsuarioRoles() != null) usuario.getUsuarioRoles().forEach(r -> r.setEstado("N"));
+            if(usuario.getUsuarioAreas() != null) usuario.getUsuarioAreas().forEach(a -> a.setEstado("N"));
+        }
+
+        usuarioRepo.save(usuario);
+        return ResponseEntity.ok(mensajeExito);
+    }
+
+    public ResponseEntity<String> eliminarUsuario(String cedula) {
+        return cambiarEstadoUsuario(cedula, "N", "Usuario eliminado correctamente");
+    }
+
+    public ResponseEntity<String> habilitarUsuario(String cedula) {
+        return cambiarEstadoUsuario(cedula, "A", "Usuario activado correctamente");
+    }
+
+    public ResponseEntity<String> deshabilitarUsuario(String cedula) {
+        return cambiarEstadoUsuario(cedula, "I", "Usuario desactivado correctamente");
+    }
+
+    public ResponseEntity<String> bloquearUsuario(String cedula) {
+        return cambiarEstadoUsuario(cedula, "B", "Usuario bloqueado correctamente");
     }
 }
-
