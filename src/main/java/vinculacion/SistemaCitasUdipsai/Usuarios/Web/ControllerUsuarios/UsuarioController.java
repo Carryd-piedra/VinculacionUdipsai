@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vinculacion.SistemaCitasUdipsai.Usuarios.Services.UsuarioService;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.CambiarContraseniaDTO;
 import vinculacion.SistemaCitasUdipsai.Usuarios.Services.dto.UsuarioDTO;
 import vinculacion.SistemaCitasUdipsai.Usuarios.entity.UsuarioEntity;
@@ -19,13 +20,8 @@ import vinculacion.SistemaCitasUdipsai.Usuarios.entity.UsuarioEntity;
 @RequestMapping("/api")
 public class UsuarioController {
     @Autowired
-    private vinculacion.SistemaCitasUdipsai.Usuarios.Services.UsuarioService usuarioServ;
+    private UsuarioService usuarioServ;
 
-    // Hello World
-    @GetMapping("/hello")
-    public ResponseEntity<String> hello() {
-        return ResponseEntity.ok("Hello World");
-    }
 
     // Obtener todos los Usuarios activos.
     @GetMapping("/usuarios")

@@ -3,6 +3,10 @@ package vinculacion.SistemaCitasUdipsai.Usuarios.Web.ConfigUsuarios;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -88,6 +92,10 @@ public class SecurityConfig {
             "/api/areas/**",
             "/api/roles/**"
     };
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -96,45 +104,104 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // Filtros
                 .addFilterBefore(logFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .cors().and()
-                .authorizeHttpRequests(
-                        req -> req
-                                .requestMatchers(WHITE_LIST_URL).permitAll()
-                                .requestMatchers(POST, "/api/admins").permitAll()
-                                .requestMatchers(GET, "/api/admins/**").hasAnyRole("ADMIN")
-                                .requestMatchers("/api/areas/**").permitAll()
-                                .requestMatchers(PUT, "/api/admins/**").hasAnyRole("ADMIN")
-                                .requestMatchers(PATCH, "/api/admins/**").hasAnyRole("ADMIN")
-                                .requestMatchers(DELETE, "/api/admins/**").hasAnyRole("ADMIN")
-                                .requestMatchers(POST, "/api/pasantes").hasAnyRole("PROFESIONAL")
-                                .requestMatchers(POST, POST_LIST_URL).hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR")
-                                .requestMatchers(GET, GET_LIST_URL)
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR", "PROFESIONAL")
-                                .requestMatchers(PUT, "/api/secretarias/**")
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR")
-                                .requestMatchers(PUT, "/api/coordinadores/**")
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR")
-                                .requestMatchers(PUT, "/api/profesionales/**")
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR", "PROFESIONAL")
-                                .requestMatchers(PUT, "/api/pasantes/**")
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR", "PROFESIONAL", "PASANTE")
-                                .requestMatchers(PATCH, "/api/usuarios/cambiarContrasenia/**")
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR", "PROFESIONAL", "PASANTE")
-                                .requestMatchers(PATCH, "/api/pasantes/**").hasAnyRole("PROFESIONAL")
-                                .requestMatchers(PATCH, PATCH_LIST_URL).hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR")
-                                .requestMatchers(DELETE, DELETE_LIST_URL)
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR")
-                                .requestMatchers(DELETE, "/api/profesionales/**")
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR")
-                                .requestMatchers(DELETE, "/api/pasantes/**")
-                                .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR", "PROFESIONAL")
-                                .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS));
+
+                // Reglas de acceso
+                .authorizeHttpRequests(auth -> auth
+
+                        // ---------------------
+                        // ENDPOINTS PÚBLICOS
+                        // ---------------------
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/**",
+                                "/actuator/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
+                        // Registrar primer usuario (opcional)
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
+                        .requestMatchers("/api/usuarios/**").permitAll()
+
+                        // ---------------------
+                        // REGLAS DE ANIMALES (del primer config)
+                        // ---------------------
+                        .requestMatchers("/api/animals/**").hasAnyRole("ADMIN","USER")
+                        .requestMatchers(HttpMethod.POST, "/api/animals/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/animals/**").hasRole("ADMIN")
+
+                        // ---------------------
+                        // REGLAS DE ADOPCIONES Y CLIENTES
+                        // ---------------------
+                        .requestMatchers("/api/adoptions/**").hasAnyRole("ADMIN","USER")
+                        .requestMatchers("/api/customers/**").hasAnyRole("ADMIN","USER")
+
+                        // ---------------------
+                        // REGLAS DE ÁREAS
+                        // ---------------------
+                        .requestMatchers("/api/areas/**").permitAll()
+
+                        // ---------------------
+                        // ADMINISTRADORES
+                        // ---------------------
+                        .requestMatchers(HttpMethod.POST, "/api/admins").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admins/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/admins/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/admins/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/admins/**").hasRole("ADMIN")
+
+                        // ---------------------
+                        // SECRETARIAS / COORDINADORES / PROFESIONALES
+                        // ---------------------
+                        .requestMatchers(HttpMethod.PUT, "/api/secretarias/**")
+                        .hasAnyRole("ADMIN","SECRETARIA","COORDINADOR")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/coordinadores/**")
+                        .hasAnyRole("ADMIN","SECRETARIA","COORDINADOR")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/profesionales/**")
+                        .hasAnyRole("ADMIN","SECRETARIA","COORDINADOR","PROFESIONAL")
+
+                        // ---------------------
+                        // PASANTES
+                        // ---------------------
+                        .requestMatchers(HttpMethod.POST, "/api/pasantes")
+                        .hasAnyRole("PROFESIONAL")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/pasantes/**")
+                        .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR","PROFESIONAL","PASANTE")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/pasantes/**")
+                        .hasRole("PROFESIONAL")
+
+                        .requestMatchers(HttpMethod.DELETE, "/api/pasantes/**")
+                        .hasAnyRole("ADMIN", "SECRETARIA", "COORDINADOR","PROFESIONAL")
+
+                        // ---------------------
+                        // ACTUALIZAR CONTRASEÑA
+                        // ---------------------
+                        .requestMatchers(HttpMethod.PATCH, "/api/usuarios/cambiarContrasenia/**")
+                        .hasAnyRole("ADMIN","SECRETARIA","COORDINADOR","PROFESIONAL","PASANTE")
+
+                        // ---------------------
+                        // CUALQUIER OTRO REQUIERE AUTENTICACIÓN
+                        // ---------------------
+                        .anyRequest().authenticated()
+                );
 
         return http.build();
     }
+
 }
