@@ -39,6 +39,15 @@ public class SecurityConfig {
             "/api/hello/**",
             "/actuator/**",
             "/swagger-ui/**",
+            "/v3/api-docs/**",
+
+            
+            // white list de citas
+
+            "/api/pacientes/**",
+            "/api/citas/**",
+            "/actuator/**",
+            "/swagger-ui/**",
             "/v3/api-docs/**"
     };
 
@@ -92,6 +101,9 @@ public class SecurityConfig {
             "/api/areas/**",
             "/api/roles/**"
     };
+
+
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
